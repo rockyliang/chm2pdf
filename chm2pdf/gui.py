@@ -15,7 +15,7 @@ from tkinter.scrolledtext import ScrolledText
 
 from . import __version__, convert
 from .extractor import PyChmExtractor
-from .pdf_renderer import PlaywrightRenderer, WeasyPrintRenderer
+from .pdf_renderer import PlaywrightRenderer, PrinceXmlRenderer, WeasyPrintRenderer
 
 
 APP_NAME = "CHM to PDF Builder"
@@ -35,6 +35,7 @@ class App(tk.Tk):
         self._pychm_available = PyChmExtractor().available()
         self._playwright_available = PlaywrightRenderer().available()
         self._weasyprint_available = WeasyPrintRenderer().available()
+        self._prince_available = PrinceXmlRenderer().available()
 
         # Variables
         self.chm_var = tk.StringVar()
@@ -84,7 +85,8 @@ class App(tk.Tk):
             renderer_values.append("playwright")
         if self._weasyprint_available:
             renderer_values.append("weasyprint")
-        renderer_values.append("prince")
+        if self._prince_available:
+            renderer_values.append("prince")
         self.renderer_combo = ttk.Combobox(
             top,
             textvariable=self.renderer_var,
