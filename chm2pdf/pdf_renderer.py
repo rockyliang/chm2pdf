@@ -91,6 +91,83 @@ class WeasyPrintRenderer(PdfRenderer):
 
 
 # ---------------------------------------------------------------------------
+# Playwright/Chromium backend (default — zero system deps)
+# ---------------------------------------------------------------------------
+
+
+class PlaywrightRenderer(PdfRenderer):
+    """Playwright/Chromium renderer — no native system dependencies.
+
+    Requires::
+
+        pip install playwright
+        playwright install chromium
+    """
+
+    name = "playwright"
+
+    def available(self) -> bool:
+        try:
+            from playwright.sync_api import sync_playwright  # noqa: F401
+            return True
+        except ImportError:
+            return False
+
+    def render(
+        self,
+        book_html: Path,
+        print_css: Path,
+        output_pdf: Path,
+        log: LogFn,
+    ) -> None:
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            raise RuntimeError(
+                "Playwright is not installed. Run:\n"
+                "  pip install playwright\n"
+                "  playwright install chromium"
+            )
+
+        size_mb = book_html.stat().st_size / 1024 / 1024
+        log(f"Rendering PDF with Playwright/Chromium ({size_mb:.1f} MB HTML input)...")
+        if size_mb > 10:
+            log("  Large document — this may take several minutes. Please wait...")
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
+
+            # Navigate to the book HTML file
+            page.goto(book_html.as_uri(), wait_until="networkidle")
+
+            # Inject the print stylesheet
+            page.add_style_tag(path=str(print_css))
+
+            # Generate PDF with hierarchical bookmarks
+            page.pdf(
+                path=str(output_pdf),
+                format="A4",
+                margin={
+                    "top": "16mm",
+                    "right": "14mm",
+                    "bottom": "16mm",
+                    "left": "14mm",
+                },
+                outline=True,           # hierarchical bookmarks from h1-h6
+                tagged=True,            # tagged/accessible PDF
+                print_background=True,  # include background colors/images
+            )
+
+            browser.close()
+
+        if not output_pdf.exists():
+            raise RuntimeError("Playwright finished but no PDF was created.")
+        pdf_mb = output_pdf.stat().st_size / 1024 / 1024
+        log(f"PDF created: {output_pdf.name} ({pdf_mb:.1f} MB)")
+
+
+# ---------------------------------------------------------------------------
 # PrinceXML backend (optional, requires license for watermark-free output)
 # ---------------------------------------------------------------------------
 
@@ -175,25 +252,37 @@ class PrinceXmlRenderer(PdfRenderer):
 # ---------------------------------------------------------------------------
 
 def get_renderer(
-    name: str = "weasyprint",
+    name: str = "playwright",
     prince_path: str = "",
 ) -> PdfRenderer:
     """Return the requested PDF renderer.
 
-    *name* is ``'weasyprint'`` (default) or ``'prince'``.
+    *name* is ``'playwright'`` (default), ``'weasyprint'``, or ``'prince'``.
     """
+    if name == "playwright":
+        renderer = PlaywrightRenderer()
+        if not renderer.available():
+            raise RuntimeError(
+                "Playwright not installed. Run:\n"
+                "  pip install playwright\n"
+                "  playwright install chromium"
+            )
+        return renderer
+
     if name == "prince":
         renderer = PrinceXmlRenderer(prince_path)
         if not renderer.available():
             raise RuntimeError(
-                "PrinceXML not found. Install it or use --renderer weasyprint."
+                "PrinceXML not found. Install it or use --renderer playwright."
             )
         return renderer
 
+    # "weasyprint"
     renderer = WeasyPrintRenderer()
     if not renderer.available():
         raise RuntimeError(
-            "WeasyPrint not installed. Run: pip install weasyprint"
+            "WeasyPrint not installed. Run: pip install weasyprint\n"
+            "WeasyPrint also requires native GTK3 libraries (see README)."
         )
     return renderer
 

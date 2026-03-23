@@ -15,7 +15,7 @@ from tkinter.scrolledtext import ScrolledText
 
 from . import __version__, convert
 from .extractor import PyChmExtractor
-from .pdf_renderer import WeasyPrintRenderer
+from .pdf_renderer import PlaywrightRenderer, WeasyPrintRenderer
 
 
 APP_NAME = "CHM to PDF Builder"
@@ -33,6 +33,7 @@ class App(tk.Tk):
 
         # Detect available backends
         self._pychm_available = PyChmExtractor().available()
+        self._playwright_available = PlaywrightRenderer().available()
         self._weasyprint_available = WeasyPrintRenderer().available()
 
         # Variables
@@ -44,7 +45,9 @@ class App(tk.Tk):
         self.include_toc_var = tk.BooleanVar(value=True)
         self.keep_work_var = tk.BooleanVar(value=True)
         self.renderer_var = tk.StringVar(
-            value="weasyprint" if self._weasyprint_available else "prince"
+            value="playwright" if self._playwright_available
+            else "weasyprint" if self._weasyprint_available
+            else "prince"
         )
 
         self._build_ui()
@@ -77,6 +80,8 @@ class App(tk.Tk):
         row += 1
         ttk.Label(top, text="PDF renderer").grid(row=row, column=0, sticky="w", **pad)
         renderer_values = []
+        if self._playwright_available:
+            renderer_values.append("playwright")
         if self._weasyprint_available:
             renderer_values.append("weasyprint")
         renderer_values.append("prince")

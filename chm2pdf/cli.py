@@ -36,9 +36,9 @@ def main(argv: list[str] | None = None) -> None:
     )
     parser.add_argument(
         "--renderer",
-        choices=["weasyprint", "prince"],
-        default="weasyprint",
-        help="PDF rendering backend (default: weasyprint)",
+        choices=["playwright", "weasyprint", "prince"],
+        default="playwright",
+        help="PDF rendering backend (default: playwright)",
     )
     parser.add_argument(
         "--prince-path",

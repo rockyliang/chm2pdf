@@ -194,6 +194,35 @@ def rewrite_css_urls(css_text: str, css_dir: str, book_dir: str) -> str:
     return _CSS_URL_RE.sub(_replace, css_text)
 
 
+# ---------------------------------------------------------------------------
+# Body heading downgrade (for Playwright bookmark compatibility)
+# ---------------------------------------------------------------------------
+
+_HEADING_RE = re.compile(
+    r"<(h[1-6])(\b[^>]*)>(.*?)</\1>",
+    re.I | re.S,
+)
+
+
+def downgrade_body_headings(body_html: str) -> str:
+    """Replace ``<h1>``–``<h6>`` in topic body with ``<div class="body-hN">``.
+
+    This prevents body-content headings from generating PDF bookmarks in
+    Playwright (which auto-generates outline entries from all h1–h6).
+    WeasyPrint uses ``bookmark-level: none`` CSS for the same purpose, but
+    using non-heading elements is a renderer-agnostic solution.
+
+    The visual appearance is preserved via CSS rules in ``css_generator.py``.
+    """
+    def _replace(m: re.Match) -> str:
+        tag = m.group(1).lower()  # e.g. "h2"
+        attrs = m.group(2)        # e.g. ' class="foo"'
+        inner = m.group(3)
+        return f'<div class="body-{tag}"{attrs}>{inner}</div>'
+
+    return _HEADING_RE.sub(_replace, body_html)
+
+
 def rewrite_stylesheet_file(
     css_path: Path,
     extracted_dir: Path,

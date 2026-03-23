@@ -12,6 +12,7 @@ from .utils import LogFn
 from .css_generator import generate_print_css
 from .html_processor import (
     collect_stylesheets,
+    downgrade_body_headings,
     rewrite_css_urls,
     rewrite_stylesheet_file,
     scope_styles,
@@ -215,6 +216,11 @@ def _prepare_topics(
 
         # Rewrite internal URLs
         rewritten_body = rewrite_fragment_urls(body_html, topic_dir_rel, anchor_map)
+
+        # Downgrade h1-h6 in body to <div class="body-hN"> so only topic
+        # titles produce PDF bookmarks (required for Playwright; also cleaner
+        # for WeasyPrint since it replaces the bookmark-level:none CSS hack).
+        rewritten_body = downgrade_body_headings(rewritten_body)
 
         # Validate resources
         _validate_resources(rewritten_body, topic_dir_rel, extracted_dir, log)

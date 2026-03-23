@@ -157,12 +157,14 @@ h4.topic-title, h5.topic-title, h6.topic-title {{
   border-bottom: 1px solid #bbb;
 }}
 
-/* Suppress PDF bookmarks from headings inside topic body content,    */
-/* so only the topic titles appear in the PDF outline.                */
-.topic-body h1, .topic-body h2, .topic-body h3,
-.topic-body h4, .topic-body h5, .topic-body h6 {{
-  {bm}: none;
-}}
+/* Body headings are downgraded to <div class="body-hN"> so they     */
+/* don't generate PDF bookmarks.  Style them to match the originals. */
+.body-h1 {{ font-size: 2em; font-weight: bold; margin: 0.67em 0; }}
+.body-h2 {{ font-size: 1.5em; font-weight: bold; margin: 0.83em 0; }}
+.body-h3 {{ font-size: 1.17em; font-weight: bold; margin: 1em 0; }}
+.body-h4 {{ font-size: 1em; font-weight: bold; margin: 1.33em 0; }}
+.body-h5 {{ font-size: 0.83em; font-weight: bold; margin: 1.67em 0; }}
+.body-h6 {{ font-size: 0.67em; font-weight: bold; margin: 2.33em 0; }}
 
 /* ------------------------------------------------------------------ */
 /* Element defaults — only when CHM styles don't specify              */

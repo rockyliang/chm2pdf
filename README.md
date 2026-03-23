@@ -9,13 +9,23 @@ Designed as a **modular library** — use `chm2pdf.convert()` in your own projec
 ## Requirements
 
 - Python 3.10+
-- `pip install beautifulsoup4 weasyprint pypdf`
+- `pip install beautifulsoup4 playwright pypdf`
+- `playwright install chromium`
 
 Optional:
 - `pip install pychm` — cross-platform CHM extraction (required on macOS/Linux)
+- `pip install weasyprint` — alternative PDF renderer (requires native GTK3/Pango libraries)
 - PrinceXML — alternative PDF renderer (if you have a license)
 
 On Windows without `pychm`, the built-in `hh.exe` is used for CHM extraction automatically.
+
+### PDF renderers
+
+| Renderer | Install | Notes |
+|---|---|---|
+| **Playwright** (default) | `pip install playwright && playwright install chromium` | Zero system deps, ~250MB Chromium download |
+| WeasyPrint | `pip install weasyprint` + native GTK3 libs | Requires MSYS2 on Windows, system packages on Linux |
+| PrinceXML | Commercial license | Proprietary, watermark without license |
 
 ---
 
@@ -41,7 +51,7 @@ convert(
     "output.pdf",
     title="My Book",
     include_toc=True,
-    renderer="weasyprint",    # or "prince"
+    renderer="playwright",    # or "weasyprint", "prince"
     keep_work=False,
     log=print,                # any callable(str) -> None
     progress_callback=None,   # callable(current, total) -> None
@@ -68,12 +78,12 @@ book_html, print_css = build_book(
     extracted_dir=extracted_dir,
     title="My Book",
     include_generated_toc=True,
-    renderer="weasyprint",
+    renderer="playwright",
     log=print,
 )
 
 # 3. Render PDF
-renderer = get_renderer("weasyprint")
+renderer = get_renderer("playwright")
 renderer.render(book_html, print_css, Path("output.pdf"), log=print)
 ```
 
@@ -89,7 +99,10 @@ python -m chm2pdf file1.chm file2.chm file3.chm -o pdfs/
 # With options
 python -m chm2pdf input.chm -o out/ --title "My Book" --no-toc --keep-work
 
-# Using PrinceXML instead of WeasyPrint
+# Using WeasyPrint instead of Playwright
+python -m chm2pdf input.chm --renderer weasyprint
+
+# Using PrinceXML
 python -m chm2pdf input.chm --renderer prince --prince-path "C:\Program Files\Prince\engine\bin\prince.exe"
 ```
 
@@ -102,7 +115,7 @@ python -m chm2pdf --help
   -o, --output          Output directory (default: same as input)
   --title               PDF title (default: CHM filename)
   --no-toc              Skip generated table of contents page
-  --renderer            weasyprint (default) or prince
+  --renderer            playwright (default), weasyprint, or prince
   --prince-path         Path to prince.exe
   --hh-path             Path to hh.exe (Windows fallback)
   --keep-work           Keep intermediate working folder
@@ -117,7 +130,7 @@ python chm2pdf_gui.py
 
 1. Select a `.chm` file
 2. Choose output folder
-3. Pick PDF renderer (WeasyPrint recommended)
+3. Pick PDF renderer (Playwright recommended)
 4. Click **Convert CHM to PDF**
 
 ---
@@ -134,7 +147,7 @@ chm2pdf/
 ├── html_processor.py     # HTML head/body splitting, style scoping, URL rewriting
 ├── css_generator.py      # Language-adaptive print stylesheet generation
 ├── book_builder.py       # Combine topics into single/chunked HTML (with orphan detection)
-├── pdf_renderer.py       # WeasyPrint (primary) + PrinceXML (optional) + PDF merging
+├── pdf_renderer.py       # Playwright (default) + WeasyPrint + PrinceXML + PDF merging
 ├── cli.py                # Command-line interface
 └── gui.py                # Tkinter GUI
 ```
@@ -185,7 +198,7 @@ CHM file
   │   ├─ Language-specific font stack in print.css
   │   └─ Large documents (500+ topics): split into chunks
   │
-  └─ Render PDF ─── WeasyPrint (default) or PrinceXML
+  └─ Render PDF ─── Playwright (default), WeasyPrint, or PrinceXML
         └─ Chunked: render each chunk → merge with pypdf
 ```
 
@@ -207,7 +220,7 @@ The original converter was a single 759-line script using regex HTML parsing, Pr
 | 6 | **No fallback without `.hhc`** | Auto-scans all HTML files |
 | 7 | **Broken CSS `url()` references** | Rewritten relative to book.html |
 | 8 | **Flat bookmarks** | Multi-level hierarchy preserved (h1–h6 matching TOC depth) |
-| 9 | **PrinceXML watermark** | WeasyPrint is now default (free) |
+| 9 | **PrinceXML watermark** | Playwright is now default (free, no system deps) |
 | 10 | **Windows-only** | pychm for cross-platform extraction |
 | 11 | **Wrong CJK glyphs** — mixed SC/TC/JP/KR font stack | Language-adaptive font selection from encoding |
 | 12 | **Flat TOC page** — no visual hierarchy | Nested `<ul>` with indentation and bold headings |
@@ -218,6 +231,8 @@ The original converter was a single 759-line script using regex HTML parsing, Pr
 - One-call `convert()` API for library use
 - CLI with batch support (`python -m chm2pdf`)
 - Modular package (10 independently importable modules)
+- Three PDF renderers: Playwright (default), WeasyPrint, PrinceXML
+- Zero system dependencies with Playwright — just `pip install` and go
 - Determinate progress bar in GUI (with animated rendering indicator)
 - Resource validation (warns about missing images)
 - Chunked rendering for large documents (500+ topics) with automatic PDF merging

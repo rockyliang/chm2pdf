@@ -23,7 +23,7 @@ def convert(
     *,
     title: str | None = None,
     include_toc: bool = True,
-    renderer: str = "weasyprint",
+    renderer: str = "playwright",
     prince_path: str = "",
     hh_path: str = "",
     keep_work: bool = False,
@@ -45,7 +45,7 @@ def convert(
     include_toc : bool
         Whether to include a generated table-of-contents page (default True).
     renderer : str
-        ``'weasyprint'`` (default, free) or ``'prince'`` (requires license).
+        ``'playwright'`` (default), ``'weasyprint'``, or ``'prince'``.
     prince_path : str
         Explicit path to prince.exe (only needed with ``renderer='prince'``).
     hh_path : str

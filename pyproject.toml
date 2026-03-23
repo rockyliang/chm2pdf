@@ -5,11 +5,12 @@ description = "Convert CHM (Compiled HTML Help) files to PDF with full content a
 requires-python = ">=3.10"
 dependencies = [
     "beautifulsoup4>=4.12",
-    "weasyprint>=60.0",
+    "playwright>=1.40",
     "pypdf>=3.0",
 ]
 
 [project.optional-dependencies]
+weasyprint = ["weasyprint>=60.0"]
 chm = ["pychm>=0.8"]
 
 [project.scripts]
