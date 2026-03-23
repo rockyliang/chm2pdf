@@ -144,16 +144,12 @@ class PlaywrightRenderer(PdfRenderer):
             # Inject the print stylesheet
             page.add_style_tag(path=str(print_css))
 
-            # Generate PDF with hierarchical bookmarks
+            # Generate PDF with hierarchical bookmarks.
+            # prefer_css_page_size=True defers to @page CSS for size and
+            # margins, matching WeasyPrint's behaviour exactly.
             page.pdf(
                 path=str(output_pdf),
-                format="A4",
-                margin={
-                    "top": "16mm",
-                    "right": "14mm",
-                    "bottom": "16mm",
-                    "left": "14mm",
-                },
+                prefer_css_page_size=True,
                 outline=True,           # hierarchical bookmarks from h1-h6
                 tagged=True,            # tagged/accessible PDF
                 print_background=True,  # include background colors/images

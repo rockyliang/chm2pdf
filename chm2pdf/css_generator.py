@@ -72,6 +72,14 @@ def generate_print_css(
 }}
 
 /* ------------------------------------------------------------------ */
+/* Preserve background colors/images in print (Chromium/Playwright)   */
+/* ------------------------------------------------------------------ */
+* {{
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}}
+
+/* ------------------------------------------------------------------ */
 /* Base typography — low specificity, original CHM styles win          */
 /* ------------------------------------------------------------------ */
 html, body {{
