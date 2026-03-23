@@ -149,9 +149,11 @@ def _prepare_topics(
     # ------------------------------------------------------------------
     toc_paths = {normalize_chm_local_path(p) for _, p, _ in flat_entries if p}
     orphans = _find_orphan_html(extracted_dir, toc_paths)
+    orphan_paths: set[str] = set()
     if orphans:
-        log(f"Found {len(orphans)} HTML files not in TOC (will include as additional topics).")
+        log(f"Found {len(orphans)} HTML files not in TOC (will include in body, hidden from TOC).")
         for orphan_path in orphans:
+            orphan_paths.add(normalize_chm_local_path(orphan_path))
             flat_entries.append((
                 Path(orphan_path).stem.replace("_", " ").replace("-", " ").title(),
                 orphan_path,
@@ -231,6 +233,7 @@ def _prepare_topics(
             "level": level,
             "content": rewritten_body,
             "scoped_styles": scoped_styles,
+            "is_orphan": rel_path_norm in orphan_paths,
         })
 
         if progress_callback:
@@ -325,6 +328,8 @@ def _generate_book_html(
     """
     if toc_sections is None:
         toc_sections = body_sections
+    # Exclude orphan files from the visual TOC
+    toc_sections = [s for s in toc_sections if not s.get("is_orphan")]
 
     # Stylesheet tags
     stylesheet_tags = []
@@ -358,11 +363,21 @@ def _generate_book_html(
     section_html_parts = []
     for sec in body_sections:
         sid = html_mod.escape(sec["section_id"], quote=True)
-        h_level = min(sec["level"], 6)  # HTML only has h1–h6
+        escaped_title = html_mod.escape(sec["title"])
+        if sec.get("is_orphan"):
+            # Orphan topics: use <div> title so they don't create bookmarks
+            title_tag = (
+                f'  <div class="topic-title">{escaped_title}</div>'
+            )
+        else:
+            h_level = min(sec["level"], 6)  # HTML only has h1–h6
+            title_tag = (
+                f'  <h{h_level} class="topic-title">'
+                f'{escaped_title}</h{h_level}>'
+            )
         section_html_parts.append(
             f'<section class="topic" id="{sid}">\n'
-            f'  <h{h_level} class="topic-title">'
-            f'{html_mod.escape(sec["title"])}</h{h_level}>\n'
+            f'{title_tag}\n'
             f'  <div class="topic-body">\n'
             f'{sec["content"]}\n'
             f'  </div>\n'

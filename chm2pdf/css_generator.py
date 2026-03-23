@@ -157,7 +157,8 @@ body {{
 /* Topic titles use h1–h6 matching their TOC level for correct PDF    */
 /* bookmarks.  Style them uniformly regardless of heading level.      */
 h1.topic-title, h2.topic-title, h3.topic-title,
-h4.topic-title, h5.topic-title, h6.topic-title {{
+h4.topic-title, h5.topic-title, h6.topic-title,
+div.topic-title {{
   font-size: 14pt;
   font-weight: bold;
   margin: 0 0 12pt 0;
